@@ -2,6 +2,10 @@
 
 This project consists of two main components: a MCP server for handling SQLite database operations via Ollama, the easiest way to get up and running with large language models, and a web application for interacting with the database through a chat interface.
 
+## Demo
+
+https://github.com/user-attachments/assets/29792ebe-641d-4314-8a39-50f66a6f79d4
+
 ## Project Structure
 
 ```
@@ -70,7 +74,3 @@ npm run dev
 - React
 - Vite
 - React Router
-
-## Demo
-
-https://github.com/user-attachments/assets/29792ebe-641d-4314-8a39-50f66a6f79d4
