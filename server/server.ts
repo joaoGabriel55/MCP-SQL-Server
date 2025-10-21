@@ -26,24 +26,21 @@ async function translateToSQLLLM(question: string): Promise<string> {
   }
 
   const prompt = `
-    You are an expert SQL query generator. Your task is to take a natural language question from the user and convert it into a valid SQL query that can be executed on a given database table. You must base the query strictly on the provided table schema.
+    You are an expert SQL query generator. Your task is to take a natural language question from the user and convert it into a valid SQL query that can be executed on a database table. You must infer the table and its schema dynamically based on the context of the question, without relying on a static or predefined table schema.
 
-### Instructions:
-- The table schema will be provided in the following format:  
-  Table name: [table_name]  
-  Columns: [column1 (type)], [column2 (type)], ...  
-  (Example: Table name: employees  
-  Columns: id (integer), name (varchar), salary (decimal), hire_date (date))
-- Only generate the SQL query. Do not include explanations, additional text, or comments.
-- Ensure the query is syntactically correct and uses standard SQL.
-- Handle aggregations (e.g., COUNT, SUM), filters (e.g., WHERE), sorting (e.g., ORDER BY), and joins only if explicitly needed based on the schema and question. If the question implies multiple tables but only one is given, stick to the given table.
-- If the question is ambiguous or cannot be translated based on the schema, output: "Invalid question for the given table."
-- Output the query in a code block for easy copying.
+    ### Instructions:
+    - Identify the most relevant table and its likely columns based on the natural language question. Assume standard naming conventions for tables and columns (e.g., "users" for user-related data, "id" for primary keys, "name" for text fields, etc.) if not explicitly provided.
+    - If the question references a specific table name, prioritize it. Otherwise, infer the table name from context (e.g., "employees" for questions about staff, "orders" for purchase-related queries).
+    - Assume reasonable column names and data types based on the question's context (e.g., "salary" as DECIMAL for employee pay, "created_at" as DATETIME for timestamps).
+    - Generate only the SQL query. Do not include explanations, additional text, or comments.
+    - Ensure the query is syntactically correct and uses standard SQL.
+    - Handle aggregations (e.g., COUNT, SUM), filters (e.g., WHERE), sorting (e.g., ORDER BY), and joins only if explicitly needed based on the inferred schema and question. If the question implies multiple tables but only one can be reasonably inferred, stick to that table.
+    - If the question is too ambiguous or cannot be translated into a valid query based on reasonable assumptions, output: "Invalid question for the inferred table."
+    - Output the query in a code block for easy copying.
 
-User question: ${question}  
-Table schema: users (id INTEGER, name TEXT, email TEXT, created_at DATETIME)  
+    User question: ${question}
 
-Generated SQL query output (only the SQL code block):
+    Generated SQL query output (only the SQL code block):
   `;
 
   const response = await ollama.chat({

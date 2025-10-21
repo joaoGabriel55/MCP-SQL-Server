@@ -6,7 +6,9 @@ export function Chat() {
   const fetcher = useFetcher();
   const [searchParams] = useSearchParams();
 
-  const questionInput = searchParams.get("question") || "";
+  const [questionInput, setQuestionInput] = useState(
+    searchParams.get("question") || "",
+  );
 
   const busy = fetcher.state !== "idle";
 
@@ -48,8 +50,9 @@ export function Chat() {
         <fetcher.Form className="flex w-full gap-2" method="post">
           <input
             type="text"
-            value={questionInput}
             name="question"
+            value={questionInput}
+            onChange={(e) => setQuestionInput(e.target.value)}
             className="border-1 p-2 w-full"
           />
           <button
