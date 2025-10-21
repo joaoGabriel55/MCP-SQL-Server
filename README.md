@@ -1,6 +1,6 @@
 # MCP SQL Server with GPT Chat Interface
 
-This project consists of two main components: a server for handling SQLite database operations and a web application for interacting with the database through a chat interface.
+This project consists of two main components: a MCP server for handling SQLite database operations via Ollama, the easiest way to get up and running with large language models, and a web application for interacting with the database through a chat interface.
 
 ## Project Structure
 
