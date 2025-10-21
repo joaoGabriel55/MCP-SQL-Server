@@ -24,6 +24,15 @@ The server component is a TypeScript-based backend application that:
 
 ### Setup
 
+First, install [Ollama](https://ollama.com/) and download the model `gemma3:4b`
+
+```bash
+ollama run gemma3:4b
+```
+_Feel free to install and use other models_
+
+
+Setup server
 ```bash
 cd server
 npm install
