@@ -27,7 +27,7 @@ The server component is a TypeScript-based backend application that:
 First, install [Ollama](https://ollama.com/) and download the model `qwen2.5:latest`
 
 ```bash
-ollama run gemma3:4b
+ollama run qwen2.5:latest
 ```
 _Feel free to install and use other models_
 
