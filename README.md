@@ -2,9 +2,9 @@
 
 This project consists of two main components: a MCP server for handling SQLite database operations via Ollama, the easiest way to get up and running with large language models, and a web application for interacting with the database through a chat interface.
 
-## Demo
+## Screenshots
 
-https://github.com/user-attachments/assets/29792ebe-641d-4314-8a39-50f66a6f79d4
+<img width="2262" height="1244" alt="image" src="https://github.com/user-attachments/assets/43514de0-ddbe-419a-a347-c4704fc9d4c8" />
 
 ## Project Structure
 
