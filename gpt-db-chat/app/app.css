@@ -1,17 +1,122 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans:
-    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+@layer base {
+  :root {
+    --primary: hsl(120 53% 15%);
+    --primary-foreground: hsl(60 9.1% 97.8%);
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(240 10% 3.9%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(240 10% 3.9%);
+    --border: hsl(240 5.9% 90%);
+    --input: hsl(240 5.9% 90%);
+    --ring: hsl(142.1 76.2% 36.3%);
+    --muted: hsl(240 4.8% 95.9%);
+    --muted-foreground: hsl(240 3.8% 46.1%);
+  }
+
+  .dark {
+    --primary: hsl(142.1 70.6% 45.3%);
+    --primary-foreground: hsl(144.9 80.4% 10%);
+    --background: hsl(240 10% 3.9%);
+    --foreground: hsl(0 0% 98%);
+    --card: hsl(240 10% 3.9%);
+    --card-foreground: hsl(0 0% 98%);
+    --border: hsl(240 3.7% 15.9%);
+    --input: hsl(240 3.7% 15.9%);
+    --ring: hsl(142.4 71.8% 29.2%);
+    --muted: hsl(240 3.7% 15.9%);
+    --muted-foreground: hsl(240 5% 64.9%);
+  }
 }
 
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
-  @apply h-full;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
+@layer base {
+  * {
+    @apply border-[color:var(--border)];
   }
+
+  html,
+  body {
+    @apply antialiased bg-[color:var(--background)] text-[color:var(--foreground)];
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  body {
+    @apply flex h-screen flex-col overflow-hidden;
+  }
+
+  input,
+  textarea {
+    @apply bg-[color:var(--background)] text-[color:var(--foreground)];
+  }
+}
+
+/* Typography */
+.h1 {
+  @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl;
+}
+
+.h2 {
+  @apply scroll-m-20 text-3xl font-semibold tracking-tight;
+}
+
+.h3 {
+  @apply scroll-m-20 text-2xl font-semibold tracking-tight;
+}
+
+.h4 {
+  @apply scroll-m-20 text-xl font-semibold tracking-tight;
+}
+
+/* Layout Components */
+.container-fluid {
+  @apply w-full max-w-[1440px] mx-auto px-4 md:px-6;
+}
+
+/* Form Elements */
+.input-base {
+  @apply flex h-10 rounded-md border border-[color:var(--input)]
+         bg-[color:var(--background)] px-3 py-2 text-sm
+         ring-offset-[color:var(--background)] file:border-0
+         file:bg-transparent file:text-sm file:font-medium
+         placeholder:text-[color:var(--muted-foreground)]
+         focus-visible:outline-none focus-visible:ring-2
+         focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2
+         disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.button-base {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium
+         ring-offset-[color:var(--background)] transition-colors
+         focus-visible:outline-none focus-visible:ring-2
+         focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2
+         disabled:pointer-events-none disabled:opacity-50;
+}
+
+.button-primary {
+  @apply bg-[color:var(--primary)] text-[color:var(--primary-foreground)]
+         hover:bg-[color:var(--primary)]/90;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+  /*@apply scrollbar-thumb-(--muted)
+         dark:scrollbar-thumb-(--muted-foreground)
+         scrollbar-track-transparent hover:scrollbar-thumb-(--muted-foreground)
+         dark:hover:scrollbar-thumb--(--muted);*/
+}
+
+/* Code Block Styling */
+.code-block {
+  @apply bg-[color:var(--muted)] rounded-lg p-4 font-mono text-sm;
 }

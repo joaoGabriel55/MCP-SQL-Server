@@ -36,6 +36,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        {/* Footer */}
+        <footer className="py-4 text-center text-sm text-gray-600 dark:text-gray-400 border-t border-border">
+          <p>GPTo Database Chat • Made with ❤️</p>
+        </footer>
       </body>
     </html>
   );

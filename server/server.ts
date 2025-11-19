@@ -1,17 +1,14 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import bodyParser from "body-parser";
+import cors from "cors";
 import express from "express";
 import { open } from "sqlite";
 import sqlite3 from "sqlite3";
-import { Ollama } from "ollama";
-import cors from "cors";
-
-const ollama = new Ollama({ host: " http://localhost:11434" });
+import { z } from "zod";
+import { questionToSQL } from "./src/services/question-to-sql.ts";
 
 const memoCache = new Map<string, string>();
-
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
 
 async function openDB() {
   return open({
@@ -20,87 +17,76 @@ async function openDB() {
   });
 }
 
-async function translateToSQLLLM(question: string): Promise<string> {
-  if (memoCache.has(question)) {
-    return memoCache.get(question)!;
-  }
+const server = new McpServer({
+  name: "demo-server",
+  version: "1.0.0",
+});
 
-  const prompt = `
-    You are an expert SQL query generator. Your task is to take a natural language question from the user and convert it into a valid SQL query that can be executed on a database table. You must infer the table and its schema dynamically based on the context of the question, without relying on a static or predefined table schema.
+server.registerTool(
+  "sql-query-tool",
+  {
+    title: "SQL Query Tool",
+    description:
+      "Ask a question in natural language receives the SQL query and the result",
+    inputSchema: { question: z.string() },
+    outputSchema: { sql: z.string(), result: z.array(z.any()) },
+  },
+  async ({ question }) => {
+    const db = await openDB();
+    let output: { sql: string; result: any[] };
 
-    ### Instructions:
-    - Identify the most relevant table and its likely columns based on the natural language question. Assume standard naming conventions for tables and columns (e.g., "users" for user-related data, "id" for primary keys, "name" for text fields, etc.) if not explicitly provided.
-    - If the question references a specific table name, prioritize it. Otherwise, infer the table name from context (e.g., "employees" for questions about staff, "orders" for purchase-related queries).
-    - Assume reasonable column names and data types based on the question's context (e.g., "salary" as DECIMAL for employee pay, "created_at" as DATETIME for timestamps).
-    - Generate only the SQL query. Do not include explanations, additional text, or comments.
-    - Ensure the query is syntactically correct and uses standard SQL.
-    - Handle aggregations (e.g., COUNT, SUM), filters (e.g., WHERE), sorting (e.g., ORDER BY), and joins only if explicitly needed based on the inferred schema and question. If the question implies multiple tables but only one can be reasonably inferred, stick to that table.
-    - If the question is too ambiguous or cannot be translated into a valid query based on reasonable assumptions, output: "Invalid question for the inferred table."
-    - Output the query in a code block for easy copying.
+    try {
+      if (memoCache.has(question)) {
+        const sql = memoCache.get(question)!;
 
-    User question: ${question}
+        const rows = await db.all(sql);
 
-    Generated SQL query output (only the SQL code block):
-  `;
+        output = { sql, result: rows };
+      } else {
+        const sql = await questionToSQL(question);
 
-  const response = await ollama.chat({
-    model: "gemma3:4b",
-    messages: [{ role: "user", content: prompt }],
-  });
+        const rows = await db.all(sql);
 
-  const sqlContent = response.message.content.trim();
-  const codeBlockMatch = sqlContent.match(/```sql\s*([\s\S]*?)\s*```/i);
+        memoCache.set(question, sql);
 
-  if (codeBlockMatch && codeBlockMatch[1]) {
-    const sql = codeBlockMatch[1].trim();
+        output = { sql, result: rows };
+      }
 
-    memoCache.set(question, sql);
+      return {
+        content: [{ type: "text", text: JSON.stringify(output) }],
+        structuredContent: output,
+      };
+    } finally {
+      await db.close();
+    }
+  },
+);
 
-    return sql;
-  }
-
-  memoCache.set(question, sqlContent);
-
-  return sqlContent;
-}
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 
 app.post("/mcp", async (req, res) => {
-  const { method, params } = req.body;
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  });
 
-  try {
-    const db = await openDB();
+  res.on("close", () => {
+    transport.close();
+  });
 
-    if (method === "ping") {
-      return res.json({ result: "pong" });
-    }
-
-    if (method === "query") {
-      const rows = await db.all(params.sql);
-      return res.json({ result: rows });
-    }
-
-    if (method === "exec") {
-      await db.run(params.sql);
-      return res.json({ result: "ok" });
-    }
-
-    if (method === "ask") {
-      const question = params.question;
-      const sql = await translateToSQLLLM(question);
-
-      console.log("Generated SQL:", sql);
-
-      const rows = await db.all(sql);
-      return res.json({ sql, result: rows });
-    }
-
-    res.status(400).json({ error: `Unknown method: ${method}` });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  await server.connect(transport);
+  await transport.handleRequest(req, res, req.body);
 });
 
 const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`✅ MCP server running on http://localhost:${PORT}`);
-});
+
+app
+  .listen(PORT, () => {
+    console.log(`✅ MCP server running on http://localhost:${PORT}`);
+  })
+  .on("error", (error) => {
+    console.error("Server error:", error);
+    process.exit(1);
+  });
