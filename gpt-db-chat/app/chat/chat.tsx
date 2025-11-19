@@ -1,71 +1,151 @@
 import { useEffect, useState } from "react";
-import { useFetcher, useSearchParams } from "react-router";
+import { Form, useSearchParams } from "react-router";
 import { Table } from "~/components/table";
+import { useMcpSql, type ChatResponse } from "~/hooks/use-mcp-sql";
 
 export function Chat() {
-  const fetcher = useFetcher();
   const [searchParams] = useSearchParams();
 
   const [questionInput, setQuestionInput] = useState(
     searchParams.get("question") || "",
   );
+  const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
 
-  const busy = fetcher.state !== "idle";
-
-  const { sql, result } = fetcher.data || {};
+  const { isError, retry, error, call } = useMcpSql();
 
   useEffect(() => {
-    if (fetcher.formData) {
-      const question = fetcher.formData.get("question") as string;
+    async function fetchChatResponse() {
+      const question = searchParams.get("question");
 
-      const currentHistory = localStorage.getItem("history")
-        ? JSON.parse(localStorage.getItem("history")!)
-        : [];
+      if (question) {
+        const result = await call(question);
 
-      // Update history with the new question if it's not already present
-      if (!currentHistory.includes(question)) {
-        const updatedHistory = [question, ...currentHistory];
-        localStorage.setItem("history", JSON.stringify(updatedHistory));
+        setChatResponse(result);
       }
     }
-  }, [fetcher.formData]);
 
-  useEffect(() => {
     if (searchParams.size > 0) {
-      console.log("Search params changed:", searchParams.toString());
-
-      const question = searchParams.get("question");
-      if (question) {
-        fetcher.submit({ question }, { method: "post" });
-      }
+      fetchChatResponse();
     }
   }, []);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const question = questionInput.trim();
+
+    if (!question) return;
+
+    const result = await call(question);
+
+    setChatResponse(result);
+
+    const currentHistory = localStorage.getItem("history")
+      ? JSON.parse(localStorage.getItem("history")!)
+      : [];
+
+    if (!currentHistory.includes(question)) {
+      const updatedHistory = [question, ...currentHistory];
+      localStorage.setItem("history", JSON.stringify(updatedHistory));
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
-      <header className="flex flex-col items-center gap-9">
-        <h1 className="text-3xl font-bold">GPTo Database Chat</h1>
+    <div className="container-fluid flex flex-col bg-background">
+      {/* Header Section */}
+      <header className="py-8 text-center border-b border-border animate-fade-in">
+        <h1 className="h1 text-foreground">GPTo Database Chat</h1>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Ask questions about your database in natural language
+        </p>
       </header>
-      <div className="w-1/2 space-y-6 px-4">
-        <fetcher.Form className="flex w-full gap-2" method="post">
-          <input
-            type="text"
-            name="question"
-            value={questionInput}
-            onChange={(e) => setQuestionInput(e.target.value)}
-            className="border-1 p-2 w-full"
-          />
-          <button
-            className="border-1 p-2 w-[128px] bg-amber-900 cursor-pointer"
-            type="submit"
-            disabled={busy}
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 md:px-0 max-w-3xl mx-auto w-full py-8 gap-8">
+        {/* Question Input Section */}
+        <section className="w-full animate-fade-in">
+          <Form
+            onSubmit={handleSubmit}
+            className="flex flex-col md:flex-row gap-3"
           >
-            {busy ? "Sending..." : "Send"}
-          </button>
-        </fetcher.Form>
-      </div>
-      {sql ? <code className="border-1 p-4">{sql}</code> : null}
-      {result ? <Table rows={result} /> : null}
+            <input
+              type="text"
+              name="question"
+              value={questionInput}
+              onChange={(e) => setQuestionInput(e.target.value)}
+              placeholder="Ask a question about your database..."
+              className="input-base flex-1"
+              disabled={isError}
+            />
+            <button
+              type="submit"
+              disabled={isError || !questionInput.trim()}
+              className={`button-base button-primary px-6 py-2 ${
+                isError ? "opacity-50" : ""
+              }`}
+            >
+              {isError ? (
+                <span className="flex items-center gap-2">
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                "Ask Question"
+              )}
+            </button>
+          </Form>
+        </section>
+
+        {/* Results Section */}
+        {isError ? (
+          <div>
+            <p>Connection failed: {error}</p>
+            <button onClick={retry}>Retry</button>
+          </div>
+        ) : null}
+
+        {chatResponse && (
+          <section className="space-y-6 animate-fade-in">
+            {/* SQL Query Display */}
+            {chatResponse.sql && (
+              <div className="space-y-2">
+                <h3 className="h4 text-foreground">Generated SQL Query:</h3>
+                <div className="code-block overflow-x-auto">
+                  <pre className="whitespace-pre-wrap">{chatResponse.sql}</pre>
+                </div>
+              </div>
+            )}
+
+            {/* Results Table */}
+            {chatResponse.result && (
+              <div className="space-y-2">
+                <h3 className="h4 text-foreground">Query Results:</h3>
+                <div className="table-wrapper">
+                  <Table rows={chatResponse.result} />
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+      </main>
     </div>
   );
 }

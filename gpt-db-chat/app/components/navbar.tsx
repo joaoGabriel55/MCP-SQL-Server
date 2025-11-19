@@ -12,17 +12,12 @@ export function Navbar() {
 
   return (
     <nav className="w-full h-full px-8 border-r-1">
-      <h2 className="text-white text-xl font-bold">History</h2>
+      <h2 className="text-xl font-bold">History</h2>
 
-      <ul className="mt-8">
+      <ul className="mt-8 overflow-y-scroll">
         {history.map((item, index) => (
-          <li key={index} className="text-gray-300">
-            <a
-              href={`?question=${item}`}
-              className="hover:bg-gray-900 p-2 block rounded mb-2 hover:transition transition"
-            >
-              {item}
-            </a>
+          <li key={index}>
+            <a href={`?question=${item}`} className="p-2 block rounded mb-2 hover:transition transition">{item}</a>
           </li>
         ))}
       </ul>

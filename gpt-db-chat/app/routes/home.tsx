@@ -1,22 +1,12 @@
-import type { Route } from "./+types/home";
-import { Chat } from "../chat/chat";
-import { mcpApiAsk } from "~/infra/api/mcp-api";
 import { Navbar } from "~/components/navbar";
+import { Chat } from "../chat/chat";
+import type { Route } from "./+types/home";
 
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "GPTo Database Chat" },
     { name: "description", content: "Know more about your database" },
   ];
-}
-
-export async function clientAction({ request }: Route.ClientActionArgs) {
-  const formData = await request.formData();
-  const question = formData.get("question") as string;
-
-  const response = await mcpApiAsk({ question });
-
-  return response;
 }
 
 export default function Home() {
