@@ -12,6 +12,7 @@
     "@modelcontextprotocol/sdk": "^1.22.0",
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
+    "@uidotdev/usehooks": "^2.4.1",
     "isbot": "^5.1.31",
     "react": "^19.3.0-canary-1324e1bb-20251016",
     "react-dom": "^19.3.0-canary-1324e1bb-20251016",

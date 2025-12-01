@@ -1,3 +1,4 @@
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 import { Form, useSearchParams } from "react-router";
 import { Table } from "~/components/table";
@@ -5,13 +6,17 @@ import { useMcpSql, type ChatResponse } from "~/hooks/use-mcp-sql";
 
 export function Chat() {
   const [searchParams] = useSearchParams();
+  const [chatHistory, saveChatHistory] = useLocalStorage<string[]>(
+    "history",
+    [],
+  );
 
   const [questionInput, setQuestionInput] = useState(
     searchParams.get("question") || "",
   );
   const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
 
-  const { isError, retry, error, call } = useMcpSql();
+  const { isError, isLoading, retry, error, call } = useMcpSql();
 
   useEffect(() => {
     async function fetchChatResponse() {
@@ -40,13 +45,9 @@ export function Chat() {
 
     setChatResponse(result);
 
-    const currentHistory = localStorage.getItem("history")
-      ? JSON.parse(localStorage.getItem("history")!)
-      : [];
-
-    if (!currentHistory.includes(question)) {
-      const updatedHistory = [question, ...currentHistory];
-      localStorage.setItem("history", JSON.stringify(updatedHistory));
+    if (!chatHistory.includes(question)) {
+      const updatedHistory = [question, ...chatHistory];
+      saveChatHistory(updatedHistory);
     }
   };
 
@@ -84,7 +85,7 @@ export function Chat() {
                 isError ? "opacity-50" : ""
               }`}
             >
-              {isError ? (
+              {isLoading ? (
                 <span className="flex items-center gap-2">
                   <svg
                     className="animate-spin h-4 w-4"
