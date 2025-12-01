@@ -1,23 +1,21 @@
-import { useEffect, useState } from "react";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
 export function Navbar() {
-  const [history, setHistory] = useState<string[]>([]);
-
-  useEffect(() => {
-    const storedHistory = localStorage.getItem("history");
-    if (storedHistory) {
-      setHistory(JSON.parse(storedHistory));
-    }
-  }, []);
+  const [chatHistory] = useLocalStorage<string[]>("history", []);
 
   return (
-    <nav className="w-full h-full px-8 border-r-1">
+    <nav className="w-full h-full px-8 border-r">
       <h2 className="text-xl font-bold">History</h2>
 
       <ul className="mt-8 overflow-y-scroll">
-        {history.map((item, index) => (
+        {chatHistory.map((item, index) => (
           <li key={index}>
-            <a href={`?question=${item}`} className="p-2 block rounded mb-2 hover:transition transition">{item}</a>
+            <a
+              href={`?question=${item}`}
+              className="p-2 block rounded mb-2 hover:transition transition"
+            >
+              {item}
+            </a>
           </li>
         ))}
       </ul>

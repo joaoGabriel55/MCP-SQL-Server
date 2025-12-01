@@ -13,6 +13,7 @@ export function useMcpSql() {
   });
 
   const isError = state === "failed";
+  const isLoading = state === "loading";
 
   const call = async (question: string) => {
     try {
@@ -28,6 +29,7 @@ export function useMcpSql() {
   return {
     retry,
     isError,
+    isLoading,
     error,
     call,
   };
