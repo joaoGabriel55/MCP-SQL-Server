@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMcp } from "use-mcp/react";
 
 export interface ChatResponse {
@@ -6,16 +7,18 @@ export interface ChatResponse {
 }
 
 export function useMcpSql() {
+  const [isLoading, setIsLoading] = useState(false);
+
   const { state, retry, error, callTool } = useMcp({
-    url: "http://localhost:3001/mcp",
+    url: "http://localhost:3002/mcp",
     clientName: "MCP-SQL-Chat",
     autoReconnect: true,
   });
 
   const isError = state === "failed";
-  const isLoading = state === "loading";
 
   const call = async (question: string) => {
+    setIsLoading(true);
     try {
       const result = await callTool("sql-query-tool", { question });
 
@@ -23,8 +26,12 @@ export function useMcpSql() {
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  console.log({ isLoading, state });
 
   return {
     retry,

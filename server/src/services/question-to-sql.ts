@@ -1,4 +1,6 @@
 import { Ollama } from "ollama";
+import { Database } from "sqlite";
+import { schemaCache } from "../db/schema-cache.ts";
 
 const ollama = new Ollama({ host: " http://localhost:11434" });
 
@@ -11,30 +13,47 @@ const generateChatAnswer = async (prompt: string) => {
   return response.message.content.trim();
 };
 
-export async function questionToSQL(question: string): Promise<string> {
+export async function questionToSQL(
+  question: string,
+  db: Database,
+): Promise<string> {
+  const schemaInfo = await schemaCache.getSchema(db);
+
   const prompt = `
-    You are an expert SQL query generator. Your task is to take a natural language question from the user and convert it into a valid SQL query that can be executed on one or more database tables.
-    You must infer the tables, their schemas, and appropriate join types (LEFT, RIGHT, INNER, OUTER) dynamically based on the context of the question, without relying on a static or predefined table schema.
+  You are an expert SQL query generator for SQLite databases. Your task is to convert a natural language question into a valid SQL query based on the provided database schema.
 
-    ### Instructions:
-    - Identify the most relevant table(s) and their likely columns based on the natural language question. Assume standard naming conventions for tables and columns (e.g., "users" for user-related data, "id" for primary keys, "name" for text fields, etc.) if not explicitly provided.
-    - If the question references specific table names, prioritize them. Otherwise, infer table names from context (e.g., "employees" for staff-related queries, "orders" for purchase-related queries, "departments" for organizational data).
-    - Assume reasonable column names and data types based on the question's context (e.g., "salary" as DECIMAL for employee pay, "created_at" as DATETIME for timestamps, "user_id" as INTEGER for foreign keys).
-    - Detect when multiple tables are implied and infer appropriate join types (LEFT, RIGHT, INNER, OUTER) based on the relationships described in the question. Use foreign keys (e.g., "user_id", "order_id") to establish relationships between tables when needed.
-    - Generate only the SQL query. Do not include explanations, additional text, or comments.
-    - Ensure the query is syntactically correct and uses standard SQL.
-    - Handle aggregations (e.g., COUNT, SUM), filters (e.g., WHERE), sorting (e.g., ORDER BY), and joins (LEFT, RIGHT, INNER, OUTER) only if explicitly or implicitly needed based on the inferred schema and question.
-    - If the question is too ambiguous or cannot be translated into a valid query based on reasonable assumptions, output: "Invalid question for the inferred table(s)."
-    - Output the query in a code block for easy copying.
+  ${schemaInfo}
 
-    User question: ${question}
+  ### Instructions:
+  - Use ONLY the tables and columns defined in the schema above
+  - Generate syntactically correct SQLite queries
+  - Use appropriate JOIN types (INNER, LEFT, RIGHT) based on the question context
+  - Include WHERE clauses for filtering when needed
+  - Use aggregation functions (COUNT, SUM, AVG, MIN, MAX) when appropriate
+  - Add ORDER BY clauses for sorting when requested
+  - Use GROUP BY for aggregations
+  - Ensure proper handling of NULL values
+  - Generate ONLY the SQL query without explanations, comments, or markdown formatting
+  - If the question cannot be answered with the available schema, output: "Cannot generate query: required tables or columns not found in schema"
 
-    Generated SQL query output (only the SQL raw query without break lines):
+  ### Examples of good queries:
+  - Use table and column names exactly as shown in the schema
+  - Use proper SQLite syntax and functions
+  - Join tables using their foreign key relationships when needed
+
+  User question: ${question}
+
+  Generated SQL query (output ONLY the raw SQL query):
   `;
 
   const sqlContent = await generateChatAnswer(prompt);
 
-  const codeBlockMatch = sqlContent.trim().split("```sql\n").join("").split("\n```").join("");
+  const codeBlockMatch = sqlContent
+    .trim()
+    .split("```sql\n")
+    .join("")
+    .split("\n```")
+    .join("");
 
   return codeBlockMatch;
 }
