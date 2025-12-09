@@ -3,19 +3,11 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { open } from "sqlite";
-import sqlite3 from "sqlite3";
 import { z } from "zod";
 import { questionToSQL } from "./src/services/question-to-sql.ts";
+import { openDB } from "./src/db/open-db.ts";
 
 const memoCache = new Map<string, string>();
-
-async function openDB() {
-  return open({
-    filename: "./database.db",
-    driver: sqlite3.Database,
-  });
-}
 
 const server = new McpServer({
   name: "demo-server",
@@ -43,7 +35,7 @@ server.registerTool(
 
         output = { sql, result: rows };
       } else {
-        const sql = await questionToSQL(question);
+        const sql = await questionToSQL(question, db);
 
         const rows = await db.all(sql);
 
@@ -80,7 +72,7 @@ app.post("/mcp", async (req, res) => {
   await transport.handleRequest(req, res, req.body);
 });
 
-const PORT = 3001;
+const PORT = 3002;
 
 app
   .listen(PORT, () => {

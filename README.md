@@ -69,6 +69,12 @@ cd server
 npm run start
 ```
 
+**Extra:** You can run the CLI
+```bash
+cd server
+npm run cli "Your question"
+```
+
 2. Start the web application:
 ```bash
 cd gpt-db-chat
