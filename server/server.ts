@@ -1,58 +1,8 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { z } from "zod";
-import { questionToSQL } from "./src/services/question-to-sql.ts";
-import { openDB } from "./src/db/open-db.ts";
-
-const memoCache = new Map<string, string>();
-
-const server = new McpServer({
-  name: "demo-server",
-  version: "1.0.0",
-});
-
-server.registerTool(
-  "sql-query-tool",
-  {
-    title: "SQL Query Tool",
-    description:
-      "Ask a question in natural language receives the SQL query and the result",
-    inputSchema: { question: z.string() },
-    outputSchema: { sql: z.string(), result: z.array(z.any()) },
-  },
-  async ({ question }) => {
-    const db = await openDB();
-    let output: { sql: string; result: any[] };
-
-    try {
-      if (memoCache.has(question)) {
-        const sql = memoCache.get(question)!;
-
-        const rows = await db.all(sql);
-
-        output = { sql, result: rows };
-      } else {
-        const sql = await questionToSQL(question, db);
-
-        const rows = await db.all(sql);
-
-        memoCache.set(question, sql);
-
-        output = { sql, result: rows };
-      }
-
-      return {
-        content: [{ type: "text", text: JSON.stringify(output) }],
-        structuredContent: output,
-      };
-    } finally {
-      await db.close();
-    }
-  },
-);
+import { mcpServer } from "./src/mcp-server";
 
 const app = express();
 app.use(cors());
@@ -68,7 +18,7 @@ app.post("/mcp", async (req, res) => {
     transport.close();
   });
 
-  await server.connect(transport);
+  await mcpServer.connect(transport);
   await transport.handleRequest(req, res, req.body);
 });
 
