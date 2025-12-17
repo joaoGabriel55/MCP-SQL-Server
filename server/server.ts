@@ -2,7 +2,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { mcpServer } from "./src/mcp-server";
+import { mcpServer } from "./src/mcp-server.ts";
 
 const app = express();
 app.use(cors());

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { openDB } from "./db/open-db";
-import { questionToSQL } from "./services/question-to-sql";
+import { openDB } from "./db/open-db.ts";
+import { questionToSQL } from "./services/question-to-sql.ts";
 
 const memoCache = new Map<string, string>();
 
