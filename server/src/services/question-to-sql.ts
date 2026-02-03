@@ -1,59 +1,99 @@
+import type { Message } from "ollama";
 import { Ollama } from "ollama";
-import { Database } from "sqlite";
+import { openDB } from "../db/open-db.ts";
 import { schemaCache } from "../db/schema-cache.ts";
+import { tools } from "../tools/index.ts";
+import { runSQLQuery } from "../tools/sql-query-tool.ts";
 
 const ollama = new Ollama({ host: " http://localhost:11434" });
 
-const generateChatAnswer = async (prompt: string) => {
+const generateChatAnswer = async (messages: Message[]) => {
   const response = await ollama.chat({
     model: "qwen2.5:latest",
-    messages: [{ role: "user", content: prompt }],
+    messages,
+    tools,
+    // think: true,
   });
 
-  return response.message.content.trim();
+  return response.message;
 };
 
-export async function questionToSQL(
-  question: string,
-  db: Database,
-): Promise<string> {
-  const schemaInfo = await schemaCache.getSchema(db);
+const memoCache = new Map<string, string>();
 
-  const prompt = `
-  You are an expert SQL query generator for SQLite databases. Your task is to convert a natural language question into a valid SQL query based on the provided database schema.
+export async function questionToSQLResult(question: string) {
+  const db = await openDB();
 
-  ${schemaInfo}
+  try {
+    if (memoCache.has(question)) {
+      const sql = memoCache.get(question)!;
 
-  ### Instructions:
-  - Use ONLY the tables and columns defined in the schema above
-  - Generate syntactically correct SQLite queries
-  - Use appropriate JOIN types (INNER, LEFT, RIGHT) based on the question context
-  - Include WHERE clauses for filtering when needed
-  - Use aggregation functions (COUNT, SUM, AVG, MIN, MAX) when appropriate
-  - Add ORDER BY clauses for sorting when requested
-  - Use GROUP BY for aggregations
-  - Ensure proper handling of NULL values
-  - Generate ONLY the SQL query without explanations, comments, or markdown formatting
-  - If the question cannot be answered with the available schema, output: "Cannot generate query: required tables or columns not found in schema"
+      const result = await runSQLQuery({ sql, db });
 
-  ### Examples of good queries:
-  - Use table and column names exactly as shown in the schema
-  - Use proper SQLite syntax and functions
-  - Join tables using their foreign key relationships when needed
+      return result;
+    }
 
-  User question: ${question}
+    const schemaInfo = await schemaCache.getSchema(db);
 
-  Generated SQL query (output ONLY the raw SQL query):
-  `;
+    const prompt = `
+      You are an expert SQL query generator for SQLite databases.
 
-  const sqlContent = await generateChatAnswer(prompt);
+      Your task is to transform a natural language question into a valid SQLite SQL query **by ALWAYS invoking the MCP tool 'sql_query_tool'**.
+      You must NEVER return SQL directly in plain text.
 
-  const codeBlockMatch = sqlContent
-    .trim()
-    .split("```sql\n")
-    .join("")
-    .split("\n```")
-    .join("");
+      ### Database schema
+      ${schemaInfo}
 
-  return codeBlockMatch;
+      ### Mandatory rules
+      - You MUST call the MCP tool 'sql_query_tool' to produce the final output
+      - Do NOT output SQL directly in the assistant message
+      - The SQL query must be the ONLY content passed to the tool
+      - If a query cannot be generated, pass the exact string below to the tool:
+        "Cannot generate query: required tables or columns not found in schema"
+
+      ### Query generation rules
+      - Use ONLY tables and columns defined in the schema
+      - Use table and column names exactly as they appear in the schema
+      - Generate syntactically correct SQLite SQL
+      - Use appropriate JOINs (INNER, LEFT, RIGHT) based on relationships and intent
+      - Apply WHERE clauses when filtering is implied
+      - Use aggregation functions (COUNT, SUM, AVG, MIN, MAX) when appropriate
+      - Use GROUP BY whenever aggregations are used
+      - Use ORDER BY when sorting is requested
+      - Handle NULL values correctly when relevant
+      - Do NOT include comments, explanations, markdown, or formatting
+
+      ### User question
+      ${question}
+
+      ### Output requirement
+      - Call the MCP tool 'sql_query_tool'
+      - Pass ONLY the raw SQL query (or the failure message) as the tool input
+    `;
+
+    const messages: Message[] = [{ role: "user", content: prompt }];
+
+    const response = await generateChatAnswer(messages);
+
+    messages.push(response);
+
+    console.log(response.tool_calls);
+
+    if (!response.tool_calls?.length) return null;
+
+    const call = response.tool_calls[0];
+    const args = call.function.arguments as { sql: string };
+
+    console.log(args.sql);
+
+    const result = await runSQLQuery({ sql: args.sql, db });
+
+    memoCache.set(question, args.sql);
+
+    return result;
+  } catch (error) {
+    console.error(error);
+    return null;
+  } finally {
+    await db.close();
+  }
 }
