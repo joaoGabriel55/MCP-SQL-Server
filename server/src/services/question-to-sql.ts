@@ -70,20 +70,18 @@ export async function questionToSQLResult(question: string) {
       - Pass ONLY the raw SQL query (or the failure message) as the tool input
     `;
 
-    const messages: Message[] = [{ role: "user", content: prompt }];
+    const response = await generateChatAnswer([
+      { role: "user", content: prompt },
+    ]);
 
-    const response = await generateChatAnswer(messages);
-
-    messages.push(response);
-
-    console.log(response.tool_calls);
+    console.log("tool_calls: ", response.tool_calls);
 
     if (!response.tool_calls?.length) return null;
 
     const call = response.tool_calls[0];
     const args = call.function.arguments as { sql: string };
 
-    console.log(args.sql);
+    console.log("SQL: ", args.sql);
 
     const result = await runSQLQuery({ sql: args.sql, db });
 
