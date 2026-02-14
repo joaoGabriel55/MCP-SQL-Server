@@ -460,7 +460,7 @@
   resolved "https://registry.yarnpkg.com/@mjackson/node-fetch-server/-/node-fetch-server-0.2.0.tgz#577c0c25d8aae9f69a97738b7b0d03d1471cdc49"
   integrity sha512-EMlH1e30yzmTpGLQjlFmaDAjyOeZhng1/XCd7DExR8PNAnG/G1tyruZxEoUe11ClnwGhGrtsdnyyUx1frSzjng==
 
-"@modelcontextprotocol/sdk@^1.13.3", "@modelcontextprotocol/sdk@^1.22.0":
+"@modelcontextprotocol/sdk@^1.22.0":
   version "1.23.0"
   resolved "https://registry.yarnpkg.com/@modelcontextprotocol/sdk/-/sdk-1.23.0.tgz#692fc54856bc8881c202c97bad103da44efe967f"
   integrity sha512-MCGd4K9aZKvuSqdoBkdMvZNcYXCkZRYVs/Gh92mdV5IHbctX9H9uIvd4X93+9g8tBbXv08sxc/QHXTzf8y65bA==
@@ -2437,11 +2437,6 @@ statuses@^2.0.1, statuses@~2.0.2:
   resolved "https://registry.yarnpkg.com/statuses/-/statuses-2.0.2.tgz#8f75eecef765b5e1cfcdc080da59409ed424e382"
   integrity sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==
 
-strict-url-sanitise@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/strict-url-sanitise/-/strict-url-sanitise-0.0.1.tgz#10cfac63c9dfdd856d98ab9f76433dad5ce99e0c"
-  integrity sha512-nuFtF539K8jZg3FjaWH/L8eocCR6gegz5RDOsaWxfdbF5Jqr2VXWxZayjTwUzsWJDC91k2EbnJXp6FuWW+Z4hg==
-
 "string-width-cjs@npm:string-width@^4.2.0":
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
@@ -2581,14 +2576,6 @@ update-browserslist-db@^1.1.4:
   dependencies:
     escalade "^3.2.0"
     picocolors "^1.1.1"
-
-use-mcp@^0.0.21:
-  version "0.0.21"
-  resolved "https://registry.yarnpkg.com/use-mcp/-/use-mcp-0.0.21.tgz#e5f9235e7d86d18c91dfede65198537d09b224be"
-  integrity sha512-mF6WlWEnOWubUphXeNE3sc7/5dvlvN2AsUNla20EHPmwqqrt/LCdRIW0TWY+OgAX6O7HjZ+z2p8sKWG5OiObSg==
-  dependencies:
-    "@modelcontextprotocol/sdk" "^1.13.3"
-    strict-url-sanitise "^0.0.1"
 
 utils-merge@1.0.1:
   version "1.0.1"
