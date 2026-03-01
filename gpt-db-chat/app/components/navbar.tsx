@@ -7,7 +7,7 @@ export function Navbar() {
     <nav className="w-full h-full px-8 border-r">
       <h2 className="text-xl font-bold">History</h2>
 
-      <ul className="mt-8 overflow-y-scroll">
+      <ul className="mt-8">
         {chatHistory.map((item, index) => (
           <li key={index}>
             <a

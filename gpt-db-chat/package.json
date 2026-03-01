@@ -17,8 +17,7 @@
     "react": "^19.3.0-canary-1324e1bb-20251016",
     "react-dom": "^19.3.0-canary-1324e1bb-20251016",
     "react-router": "^7.9.2",
-    "ts-node": "^10.9.2",
-    "use-mcp": "^0.0.21"
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@react-router/dev": "^7.9.2",

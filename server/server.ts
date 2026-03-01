@@ -1,25 +1,15 @@
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { mcpServer } from "./src/mcp-server.ts";
+import { questionToSQLResult } from "./src/services/question-to-sql.ts";
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.post("/mcp", async (req, res) => {
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-  });
-
-  res.on("close", () => {
-    transport.close();
-  });
-
-  await mcpServer.connect(transport);
-  await transport.handleRequest(req, res, req.body);
+app.post("/question-sql-result", async (req, res) => {
+  const result = await questionToSQLResult(req.body.question);
+  res.json(result);
 });
 
 const PORT = 3002;

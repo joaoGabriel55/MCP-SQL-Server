@@ -41,10 +41,6 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  body {
-    @apply flex h-screen flex-col overflow-hidden;
-  }
-
   input,
   textarea {
     @apply bg-[color:var(--background)] text-[color:var(--foreground)];

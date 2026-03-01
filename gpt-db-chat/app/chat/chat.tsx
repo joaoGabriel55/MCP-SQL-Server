@@ -2,7 +2,10 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import { useEffect, useState } from "react";
 import { Form, useSearchParams } from "react-router";
 import { Table } from "~/components/table";
-import { useMcpSql, type ChatResponse } from "~/hooks/use-mcp-sql";
+import {
+  useQuestionToSqlResult,
+  type ChatResponse,
+} from "~/hooks/use-question-to-sql-result";
 
 export function Chat() {
   const [searchParams] = useSearchParams();
@@ -16,7 +19,7 @@ export function Chat() {
   );
   const [chatResponse, setChatResponse] = useState<ChatResponse | null>(null);
 
-  const { isError, isLoading, retry, error, call } = useMcpSql();
+  const { isLoading, isError, call } = useQuestionToSqlResult();
 
   useEffect(() => {
     async function fetchChatResponse() {
@@ -76,14 +79,11 @@ export function Chat() {
               onChange={(e) => setQuestionInput(e.target.value)}
               placeholder="Ask a question about your database..."
               className="input-base flex-1"
-              disabled={isError}
             />
             <button
               type="submit"
-              disabled={isError || !questionInput.trim()}
-              className={`button-base button-primary px-6 py-2 ${
-                isError ? "opacity-50" : ""
-              }`}
+              disabled={!questionInput.trim()}
+              className="button-base button-primary px-6 py-2"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -114,15 +114,7 @@ export function Chat() {
             </button>
           </Form>
         </section>
-
-        {/* Results Section */}
-        {isError ? (
-          <div>
-            <p>Connection failed: {error}</p>
-            <button onClick={retry}>Retry</button>
-          </div>
-        ) : null}
-
+        {isError && <p>Error occurred</p>}
         {chatResponse && (
           <section className="space-y-6 animate-fade-in">
             {/* SQL Query Display */}
@@ -139,7 +131,7 @@ export function Chat() {
             {chatResponse.result && (
               <div className="space-y-2">
                 <h3 className="h4 text-foreground">Query Results:</h3>
-                <div className="table-wrapper">
+                <div className="table-wrapper overflow-scroll overflow-y-scroll h-1/2">
                   <Table rows={chatResponse.result} />
                 </div>
               </div>

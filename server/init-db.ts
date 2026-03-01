@@ -82,9 +82,4 @@ async function init() {
   console.log("✅ Database initialized.");
 }
 
-// (async () => {
-//   const rows = await db.all("SELECT * FROM sqlite_master;");
-//   console.log(rows);
-// })();
-
 init();
